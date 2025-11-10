@@ -1,7 +1,6 @@
 // Supabase Configuration
-// Replace these with your actual Supabase project credentials
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://gmdbptmkokbteckspwro.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZGJwdG1rb2tidGVja3Nwd3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MDIzMDUsImV4cCI6MjA3ODM3ODMwNX0._FXduu7kkBT2E_pUoY_SYCB_QWRtMhb1q0pGDBcThDs';
 
 // Initialize Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
