@@ -43,8 +43,12 @@ async function addToDo(event) {
         newToDo.classList.add('todo-item');
         toDoDiv.appendChild(newToDo);
 
-        // Adding to Supabase;
-        await saveToSupabase(toDoInput.value);
+        // Adding to Supabase if enabled, otherwise localStorage;
+        if (typeof SUPABASE_ENABLED !== 'undefined' && SUPABASE_ENABLED) {
+            await saveToSupabase(toDoInput.value);
+        } else {
+            savelocal(toDoInput.value);
+        }
 
         // check btn;
         const checked = document.createElement('button');
@@ -79,8 +83,12 @@ async function deletecheck(event){
         // animation
         item.parentElement.classList.add("fall");
 
-        //removing from Supabase;
-        await removeFromSupabase(item.parentElement);
+        //removing from Supabase if enabled, otherwise localStorage;
+        if (typeof SUPABASE_ENABLED !== 'undefined' && SUPABASE_ENABLED) {
+            await removeFromSupabase(item.parentElement);
+        } else {
+            removeLocalTodos(item.parentElement);
+        }
 
         item.parentElement.addEventListener('transitionend', function(){
             item.parentElement.remove();
@@ -91,8 +99,10 @@ async function deletecheck(event){
     if(item.classList[0] === 'check-btn')
     {
         item.parentElement.classList.toggle("completed");
-        // Update completed status in Supabase
-        await updateTodoStatus(item.parentElement);
+        // Update completed status in Supabase if enabled
+        if (typeof SUPABASE_ENABLED !== 'undefined' && SUPABASE_ENABLED) {
+            await updateTodoStatus(item.parentElement);
+        }
     }
 
 
@@ -130,48 +140,54 @@ async function saveToSupabase(todoText){
 
 // Get todos from Supabase
 async function getTodos() {
-    try {
-        const { data: todos, error } = await supabase
-            .from(TODOS_TABLE)
-            .select('*')
-            .order('created_at', { ascending: true });
-        
-        if (error) throw error;
-
-        todos.forEach(function(todo) {
-            // toDo DIV;
-            const toDoDiv = document.createElement("div");
-            toDoDiv.classList.add("todo", `${savedTheme}-todo`);
-            toDoDiv.dataset.id = todo.id;
+    // Check if Supabase is enabled
+    if (typeof SUPABASE_ENABLED !== 'undefined' && SUPABASE_ENABLED) {
+        try {
+            const { data: todos, error } = await supabase
+                .from(TODOS_TABLE)
+                .select('*')
+                .order('created_at', { ascending: true });
             
-            if (todo.completed) {
-                toDoDiv.classList.add("completed");
-            }
+            if (error) throw error;
 
-            // Create LI
-            const newToDo = document.createElement('li');
-            
-            newToDo.innerText = todo.text;
-            newToDo.classList.add('todo-item');
-            toDoDiv.appendChild(newToDo);
+            todos.forEach(function(todo) {
+                // toDo DIV;
+                const toDoDiv = document.createElement("div");
+                toDoDiv.classList.add("todo", `${savedTheme}-todo`);
+                toDoDiv.dataset.id = todo.id;
+                
+                if (todo.completed) {
+                    toDoDiv.classList.add("completed");
+                }
 
-            // check btn;
-            const checked = document.createElement('button');
-            checked.innerHTML = '<i class="fas fa-check"></i>';
-            checked.classList.add("check-btn", `${savedTheme}-button`);
-            toDoDiv.appendChild(checked);
-            // delete btn;
-            const deleted = document.createElement('button');
-            deleted.innerHTML = '<i class="fas fa-trash"></i>';
-            deleted.classList.add("delete-btn", `${savedTheme}-button`);
-            toDoDiv.appendChild(deleted);
+                // Create LI
+                const newToDo = document.createElement('li');
+                
+                newToDo.innerText = todo.text;
+                newToDo.classList.add('todo-item');
+                toDoDiv.appendChild(newToDo);
 
-            // Append to list;
-            toDoList.appendChild(toDoDiv);
-        });
-    } catch (error) {
-        console.error('Error loading todos:', error);
-        alert('Failed to load todos from Supabase. Using local storage as fallback.');
+                // check btn;
+                const checked = document.createElement('button');
+                checked.innerHTML = '<i class="fas fa-check"></i>';
+                checked.classList.add("check-btn", `${savedTheme}-button`);
+                toDoDiv.appendChild(checked);
+                // delete btn;
+                const deleted = document.createElement('button');
+                deleted.innerHTML = '<i class="fas fa-trash"></i>';
+                deleted.classList.add("delete-btn", `${savedTheme}-button`);
+                toDoDiv.appendChild(deleted);
+
+                // Append to list;
+                toDoList.appendChild(toDoDiv);
+            });
+        } catch (error) {
+            console.error('Error loading todos from Supabase:', error);
+            alert('Failed to load todos from Supabase. Using local storage.');
+            getLocalTodos();
+        }
+    } else {
+        // Supabase not enabled, use localStorage
         getLocalTodos();
     }
 }
