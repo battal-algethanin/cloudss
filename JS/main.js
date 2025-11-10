@@ -24,7 +24,7 @@ savedTheme === null ?
     : changeTheme(localStorage.getItem('savedTheme'));
 
 // Functions;
-function addToDo(event) {
+async function addToDo(event) {
     // Prevents form from submitting / Prevents form from relaoding;
     event.preventDefault();
 
@@ -43,8 +43,8 @@ function addToDo(event) {
         newToDo.classList.add('todo-item');
         toDoDiv.appendChild(newToDo);
 
-        // Adding to local storage;
-        savelocal(toDoInput.value);
+        // Adding to Supabase;
+        await saveToSupabase(toDoInput.value);
 
         // check btn;
         const checked = document.createElement('button');
@@ -67,7 +67,7 @@ function addToDo(event) {
 }   
 
 
-function deletecheck(event){
+async function deletecheck(event){
 
     // console.log(event.target);
     const item = event.target;
@@ -79,8 +79,8 @@ function deletecheck(event){
         // animation
         item.parentElement.classList.add("fall");
 
-        //removing local todos;
-        removeLocalTodos(item.parentElement);
+        //removing from Supabase;
+        await removeFromSupabase(item.parentElement);
 
         item.parentElement.addEventListener('transitionend', function(){
             item.parentElement.remove();
@@ -91,13 +91,135 @@ function deletecheck(event){
     if(item.classList[0] === 'check-btn')
     {
         item.parentElement.classList.toggle("completed");
+        // Update completed status in Supabase
+        await updateTodoStatus(item.parentElement);
     }
 
 
 }
 
 
-// Saving to local storage:
+// Supabase Functions:
+
+// Save todo to Supabase
+async function saveToSupabase(todoText){
+    try {
+        const { data, error } = await supabase
+            .from(TODOS_TABLE)
+            .insert([
+                { text: todoText, completed: false }
+            ])
+            .select();
+        
+        if (error) throw error;
+        
+        // Store the id in the DOM element for later reference
+        if (data && data.length > 0) {
+            const todoElements = document.querySelectorAll('.todo');
+            const lastTodo = todoElements[todoElements.length - 1];
+            if (lastTodo) {
+                lastTodo.dataset.id = data[0].id;
+            }
+        }
+    } catch (error) {
+        console.error('Error saving todo:', error);
+        alert('Failed to save todo. Using local storage as fallback.');
+        savelocal(todoText);
+    }
+}
+
+// Get todos from Supabase
+async function getTodos() {
+    try {
+        const { data: todos, error } = await supabase
+            .from(TODOS_TABLE)
+            .select('*')
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+
+        todos.forEach(function(todo) {
+            // toDo DIV;
+            const toDoDiv = document.createElement("div");
+            toDoDiv.classList.add("todo", `${savedTheme}-todo`);
+            toDoDiv.dataset.id = todo.id;
+            
+            if (todo.completed) {
+                toDoDiv.classList.add("completed");
+            }
+
+            // Create LI
+            const newToDo = document.createElement('li');
+            
+            newToDo.innerText = todo.text;
+            newToDo.classList.add('todo-item');
+            toDoDiv.appendChild(newToDo);
+
+            // check btn;
+            const checked = document.createElement('button');
+            checked.innerHTML = '<i class="fas fa-check"></i>';
+            checked.classList.add("check-btn", `${savedTheme}-button`);
+            toDoDiv.appendChild(checked);
+            // delete btn;
+            const deleted = document.createElement('button');
+            deleted.innerHTML = '<i class="fas fa-trash"></i>';
+            deleted.classList.add("delete-btn", `${savedTheme}-button`);
+            toDoDiv.appendChild(deleted);
+
+            // Append to list;
+            toDoList.appendChild(toDoDiv);
+        });
+    } catch (error) {
+        console.error('Error loading todos:', error);
+        alert('Failed to load todos from Supabase. Using local storage as fallback.');
+        getLocalTodos();
+    }
+}
+
+// Remove todo from Supabase
+async function removeFromSupabase(todoElement){
+    const todoId = todoElement.dataset.id;
+    
+    if (!todoId) {
+        // Fallback to local storage if no ID
+        removeLocalTodos(todoElement);
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from(TODOS_TABLE)
+            .delete()
+            .eq('id', todoId);
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error deleting todo:', error);
+        removeLocalTodos(todoElement);
+    }
+}
+
+// Update todo completed status in Supabase
+async function updateTodoStatus(todoElement){
+    const todoId = todoElement.dataset.id;
+    
+    if (!todoId) return;
+
+    const isCompleted = todoElement.classList.contains("completed");
+
+    try {
+        const { error } = await supabase
+            .from(TODOS_TABLE)
+            .update({ completed: isCompleted })
+            .eq('id', todoId);
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error updating todo:', error);
+    }
+}
+
+// Local Storage Functions (Fallback):
 function savelocal(todo){
     //Check: if item/s are there;
     let todos;
@@ -114,7 +236,7 @@ function savelocal(todo){
 
 
 
-function getTodos() {
+function getLocalTodos() {
     //Check: if item/s are there;
     let todos;
     if(localStorage.getItem('todos') === null) {
