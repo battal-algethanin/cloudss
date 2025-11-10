@@ -4,10 +4,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from current directory
-app.use(express.static(__dirname));
-
-// Serve the Supabase config dynamically based on environment variables
+// Serve the Supabase config dynamically FIRST (before static files)
 app.get('/JS/supabase-config.js', (req, res) => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -47,8 +44,12 @@ console.log('To enable Supabase: Set SUPABASE_URL and SUPABASE_ANON_KEY in Rende
   }
   
   res.set('Content-Type', 'application/javascript');
+  res.set('Cache-Control', 'no-store'); // Don't cache this file
   res.send(configContent);
 });
+
+// Serve static files from current directory (AFTER dynamic routes)
+app.use(express.static(__dirname));
 
 // Send index.html for root route
 app.get('/', (req, res) => {
