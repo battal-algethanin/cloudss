@@ -17,10 +17,13 @@ app.use(express.static('.', {
 
 // Serve the Supabase config with environment variables injected
 app.get('/JS/supabase-config.js', (req, res) => {
-  const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+  const supabaseUrl = process.env.SUPABASE_URL || 'https://gmdbptmkokbteckspwro.supabase.co';
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZGJwdG1rb2tidGVja3Nwd3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MDIzMDUsImV4cCI6MjA3ODM3ODMwNX0._FXduu7kkBT2E_pUoY_SYCB_QWRtMhb1q0pGDBcThDs';
   
-  const configContent = `// Supabase Configuration (injected from environment variables)
+  const usingEnvVars = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
+  
+  const configContent = `// Supabase Configuration
+// ${usingEnvVars ? 'Using environment variables from Render' : 'Using default values - Set environment variables in Render for production'}
 const SUPABASE_URL = '${supabaseUrl}';
 const SUPABASE_ANON_KEY = '${supabaseKey}';
 
@@ -36,6 +39,11 @@ const TODOS_TABLE = 'todos';
 });
 
 app.listen(PORT, () => {
+  const usingEnvVars = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY;
   console.log(`Server running on port ${PORT}`);
-  console.log(`Environment variables configured: ${process.env.SUPABASE_URL ? 'YES' : 'NO'}`);
+  console.log(`Environment variables: ${usingEnvVars ? '✓ CONFIGURED' : '✗ Using defaults (Set in Render Dashboard)'}`);
+  if (usingEnvVars) {
+    console.log('✓ SUPABASE_URL:', process.env.SUPABASE_URL);
+    console.log('✓ SUPABASE_ANON_KEY: [HIDDEN]');
+  }
 });
