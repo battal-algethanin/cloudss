@@ -37,3 +37,22 @@
         animation: octocat-wave 560ms ease-in-out;
     }
 }
+
+/* Top-left image (image.png) styling added to place user's image fixed at the top-left */
+#top-left-image {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 60px;
+    /* adjust as needed */
+    height: auto;
+    z-index: 9999;
+    pointer-events: none;
+    /* doesn't block clicks */
+}
+
+@media (max-width: 400px) {
+    #top-left-image {
+        width: 44px;
+    }
+}
