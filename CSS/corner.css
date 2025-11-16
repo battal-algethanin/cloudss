@@ -43,16 +43,27 @@
     position: fixed;
     top: 10px;
     left: 10px;
-    width: 60px;
-    /* adjust as needed */
+    width: 140px;
+    /* increased from 60px to 140px */
+    max-width: 20vw;
+    /* keep it responsive on very large/small screens */
     height: auto;
     z-index: 9999;
     pointer-events: none;
     /* doesn't block clicks */
 }
 
+@media (max-width: 800px) {
+
+    /* medium screens */
+    #top-left-image {
+        width: 110px;
+    }
+}
+
 @media (max-width: 400px) {
     #top-left-image {
-        width: 44px;
+        width: 96px;
+        /* increased from 44px to 96px for better visibility */
     }
 }
